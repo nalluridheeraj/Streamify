@@ -1,0 +1,28 @@
+{% extends 'base/base.html' %}
+{% block title %}Admin Analytics - Streamify{% endblock %}
+{% block content %}
+<div class="mt-4">
+    <h3 class="mb-4"><i class="bi bi-shield me-2"></i>Platform Analytics</h3>
+    <div class="row g-4 mb-4">
+        <div class="col-md-3"><div class="card bg-dark border-success text-center p-4"><i class="bi bi-people text-success" style="font-size:2rem"></i><h3 class="mt-2">{{ total_users }}</h3><p class="text-muted mb-0">Total Users</p></div></div>
+        <div class="col-md-3"><div class="card bg-dark border-primary text-center p-4"><i class="bi bi-collection-play text-primary" style="font-size:2rem"></i><h3 class="mt-2">{{ total_content }}</h3><p class="text-muted mb-0">Total Content</p></div></div>
+        <div class="col-md-3"><div class="card bg-dark border-warning text-center p-4"><i class="bi bi-currency-dollar text-warning" style="font-size:2rem"></i><h3 class="mt-2">₹{{ total_revenue|floatformat:2 }}</h3><p class="text-muted mb-0">Revenue</p></div></div>
+        <div class="col-md-3"><div class="card bg-dark border-info text-center p-4"><i class="bi bi-eye text-info" style="font-size:2rem"></i><h3 class="mt-2">{{ total_views }}</h3><p class="text-muted mb-0">Total Views</p></div></div>
+    </div>
+    <div class="card bg-dark border-secondary">
+        <div class="card-header border-secondary"><h5>Recent Payments</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead><tr><th>User</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                    <tbody>
+                        {% for p in recent_payments %}
+                        <tr><td>{{ p.user.email }}</td><td>₹{{ p.amount }}</td><td><span class="badge bg-success">{{ p.status }}</span></td><td>{{ p.payment_date|date:"M d, Y" }}</td></tr>
+                        {% empty %}<tr><td colspan="4" class="text-center text-muted">No payments</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

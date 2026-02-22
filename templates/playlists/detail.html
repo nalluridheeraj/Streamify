@@ -1,0 +1,29 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ playlist.name }} - Streamify{% endblock %}
+{% block content %}
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div><h3><i class="bi bi-collection-play text-success me-2"></i>{{ playlist.name }}</h3><p class="text-muted mb-0">{{ playlist.item_count }} items &bull; {% if playlist.is_public %}Public{% else %}Private{% endif %} &bull; by {{ playlist.user.name }}</p></div>
+    </div>
+    {% if items %}
+    <div class="card bg-dark border-secondary">
+        <div class="list-group list-group-flush">
+            {% for item in items %}
+            <div class="list-group-item bg-dark text-white border-secondary d-flex align-items-center gap-3">
+                <span class="text-muted">{{ forloop.counter }}</span>
+                {% if item.content.thumbnail %}<img src="{{ item.content.thumbnail.url }}" width="48" height="48" class="rounded" style="object-fit:cover">{% endif %}
+                <div class="flex-grow-1">
+                    <a href="{% url 'content:detail' item.content.pk %}" class="text-white text-decoration-none fw-bold">{{ item.content.title }}</a>
+                    <div class="text-muted small">{{ item.content.artist_name|default:item.content.uploaded_by.name }}</div>
+                </div>
+                <span class="text-muted small">{{ item.content.duration_display }}</span>
+                <a href="{% url 'playlists:remove_from_playlist' playlist.pk item.content.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5"><i class="bi bi-music-note-list text-muted" style="font-size:4rem"></i><p class="text-muted mt-2">Playlist is empty.</p></div>
+    {% endif %}
+</div>
+{% endblock %}

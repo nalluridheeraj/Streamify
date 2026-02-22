@@ -1,0 +1,36 @@
+{% extends 'base/base.html' %}
+{% block title %}Edit - {{ content.title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+        <div class="card bg-dark border-secondary">
+            <div class="card-header border-secondary">
+                <h4 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit: {{ content.title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-8"><label class="form-label">Title</label>{{ form.title }}</div>
+                        <div class="col-md-4"><label class="form-label">Type</label>{{ form.content_type }}</div>
+                        <div class="col-md-6"><label class="form-label">Artist</label>{{ form.artist_name }}</div>
+                        <div class="col-md-6"><label class="form-label">Album</label>{{ form.album }}</div>
+                        <div class="col-12"><label class="form-label">Description</label>{{ form.description }}</div>
+                        <div class="col-12"><label class="form-label">Thumbnail</label>{{ form.thumbnail }}</div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">{{ form.is_published }}<label class="form-check-label" for="{{ form.is_published.id_for_label }}">Published</label></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">{{ form.is_premium }}<label class="form-check-label" for="{{ form.is_premium.id_for_label }}">Premium</label></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Changes</button>
+                        <a href="{% url 'content:detail' content.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Streamify - Stream Music & Videos{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section py-5 mb-4 rounded-3 position-relative overflow-hidden" 
+     style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 320px;">
+    <div class="container py-3">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="display-5 fw-bold text-white mb-3">
+                    <i class="bi bi-music-note-beamed text-success"></i> Unlimited Music & Videos
+                </h1>
+                <p class="lead text-light mb-4">Stream millions of songs, videos, and podcasts. Create playlists, follow artists, and discover new favorites.</p>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'users:register' %}" class="btn btn-success btn-lg me-2">
+                    <i class="bi bi-person-plus"></i> Start Free
+                </a>
+                <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-star"></i> View Plans
+                </a>
+                {% else %}
+                <a href="{% url 'content:list' %}" class="btn btn-success btn-lg me-2">
+                    <i class="bi bi-play-fill"></i> Start Listening
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="position-absolute" style="right: 50px; top: 30px; font-size: 180px; opacity: 0.05;">🎵</div>
+</div>
+
+<!-- Featured Content -->
+{% if featured %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold"><i class="bi bi-fire text-danger me-2"></i>Trending Now</h4>
+        <a href="{% url 'content:list' %}" class="btn btn-sm btn-outline-secondary">See All</a>
+    </div>
+    <div class="row g-3">
+        {% for item in featured %}
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card bg-dark border-secondary h-100 content-card">
+                <div class="position-relative">
+                    {% if item.thumbnail %}
+                    <img src="{{ item.thumbnail.url }}" class="card-img-top" alt="{{ item.title }}" style="height:140px;object-fit:cover">
+                    {% else %}
+                    <div class="card-img-top d-flex align-items-center justify-content-center bg-secondary" style="height:140px">
+                        {% if item.content_type == 'music' %}
+                        <i class="bi bi-music-note-beamed text-success" style="font-size:3rem"></i>
+                        {% else %}
+                        <i class="bi bi-play-circle text-primary" style="font-size:3rem"></i>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <span class="position-absolute top-0 end-0 m-1 badge bg-dark bg-opacity-75">
+                        {% if item.content_type == 'music' %}<i class="bi bi-music-note text-success"></i>
+                        {% elif item.content_type == 'video' %}<i class="bi bi-camera-video text-primary"></i>
+                        {% else %}<i class="bi bi-mic text-warning"></i>{% endif %}
+                    </span>
+                    {% if item.is_premium %}
+                    <span class="position-absolute top-0 start-0 m-1 badge bg-warning text-dark">
+                        <i class="bi bi-star-fill"></i> Premium
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="card-body p-2">
+                    <h6 class="card-title text-truncate mb-0" title="{{ item.title }}">{{ item.title }}</h6>
+                    {% if item.artist_name %}
+                    <small class="text-muted">{{ item.artist_name|truncatechars:20 }}</small>
+                    {% endif %}
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted"><i class="bi bi-eye"></i> {{ item.view_count }}</small>
+                        <a href="{% url 'content:detail' item.pk %}" class="btn btn-sm btn-success py-0 px-2">
+                            <i class="bi bi-play-fill"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Recent Music -->
+{% if recent_music %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold"><i class="bi bi-music-note text-success me-2"></i>New Music</h4>
+        <a href="{% url 'content:list' %}?type=music" class="btn btn-sm btn-outline-secondary">See All</a>
+    </div>
+    <div class="row g-3">
+        {% for item in recent_music %}
+        <div class="col-6 col-md-3 col-lg-3">
+            <div class="card bg-dark border-secondary content-card">
+                <div class="position-relative">
+                    {% if item.thumbnail %}
+                    <img src="{{ item.thumbnail.url }}" class="card-img-top" alt="{{ item.title }}" style="height:160px;object-fit:cover">
+                    {% else %}
+                    <div class="card-img-top d-flex align-items-center justify-content-center" style="height:160px;background:linear-gradient(135deg,#1db954,#005c20)">
+                        <i class="bi bi-music-note-beamed text-white" style="font-size:3.5rem"></i>
+                    </div>
+                    {% endif %}
+                    <div class="position-absolute bottom-0 end-0 m-2">
+                        <button class="btn btn-success btn-sm rounded-circle play-btn"
+                                data-src="{{ item.file_path.url }}"
+                                data-title="{{ item.title }}"
+                                data-artist="{{ item.artist_name }}"
+                                data-thumb="{% if item.thumbnail %}{{ item.thumbnail.url }}{% else %}{% endif %}">
+                            <i class="bi bi-play-fill"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-2">
+                    <a href="{% url 'content:detail' item.pk %}" class="text-decoration-none text-white">
+                        <h6 class="mb-0 text-truncate" title="{{ item.title }}">{{ item.title }}</h6>
+                    </a>
+                    <small class="text-muted">{{ item.artist_name|default:"Unknown Artist" }}</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Recent Videos -->
+{% if recent_videos %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold"><i class="bi bi-camera-video text-primary me-2"></i>New Videos</h4>
+        <a href="{% url 'content:list' %}?type=video" class="btn btn-sm btn-outline-secondary">See All</a>
+    </div>
+    <div class="row g-3">
+        {% for item in recent_videos %}
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card bg-dark border-secondary content-card">
+                <div class="position-relative">
+                    {% if item.thumbnail %}
+                    <img src="{{ item.thumbnail.url }}" class="card-img-top" alt="{{ item.title }}" style="height:180px;object-fit:cover">
+                    {% else %}
+                    <div class="card-img-top d-flex align-items-center justify-content-center" style="height:180px;background:linear-gradient(135deg,#1a1a2e,#0f3460)">
+                        <i class="bi bi-play-circle text-white" style="font-size:4rem"></i>
+                    </div>
+                    {% endif %}
+                    {% if item.is_premium %}
+                    <span class="position-absolute top-0 start-0 m-2 badge bg-warning text-dark">
+                        <i class="bi bi-star-fill"></i> Premium
+                    </span>
+                    {% endif %}
+                    <span class="position-absolute bottom-0 end-0 m-2 badge bg-dark bg-opacity-75">
+                        {{ item.duration_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'content:detail' item.pk %}" class="text-decoration-none text-white">
+                        <h6 class="mb-1 text-truncate" title="{{ item.title }}">{{ item.title }}</h6>
+                    </a>
+                    <small class="text-muted">{{ item.uploaded_by.name }} &bull; {{ item.view_count }} views</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Genres -->
+{% if genres %}
+<section class="mb-5">
+    <h4 class="fw-bold mb-3"><i class="bi bi-grid me-2"></i>Browse by Genre</h4>
+    <div class="d-flex flex-wrap gap-2">
+        {% for genre in genres %}
+        <a href="{% url 'content:list' %}?genre={{ genre.slug }}" class="btn btn-outline-secondary">
+            {{ genre.name }}
+        </a>
+        {% endfor %}
+        <a href="{% url 'content:list' %}" class="btn btn-outline-success">
+            <i class="bi bi-grid"></i> All Content
+        </a>
+    </div>
+</section>
+{% endif %}
+
+<!-- Premium CTA -->
+{% if not user.has_active_subscription %}
+<section class="mb-4">
+    <div class="card border-warning" style="background: linear-gradient(135deg, #2d2204, #1a1400)">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4 class="text-warning"><i class="bi bi-star-fill me-2"></i>Go Premium</h4>
+                    <p class="text-light mb-0">Unlock unlimited streaming, no ads, offline downloads, and exclusive content.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'subscriptions:plans' %}" class="btn btn-warning btn-lg">
+                        <i class="bi bi-star"></i> Upgrade Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

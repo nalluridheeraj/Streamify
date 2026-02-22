@@ -1,0 +1,69 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}Comments — Streamify Admin{% endblock %}
+{% block nav_comments %}active{% endblock %}
+{% block header_title %}Comments{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Comment Moderation</h1><p>Review and remove inappropriate comments</p></div>
+</div>
+<div class="panel">
+  <div style="padding:16px 20px; border-bottom:1px solid var(--border);">
+    <form method="GET">
+      <div class="search-bar" style="max-width:360px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" name="q" value="{{ q }}" placeholder="Search comments..."><button type="submit" style="background:none; border:none; cursor:pointer; color:var(--accent-2); font-size:12px;">Go</button></div>
+    </form>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>User</th><th>Comment</th><th>Content</th><th>Date</th><th style="text-align:right">Action</th></tr></thead>
+    <tbody>
+      {% for comment in comments %}
+      <tr id="comment-{{ comment.pk }}">
+        <td>
+          <div class="user-cell">
+            <div class="avatar" style="width:26px; height:26px; font-size:11px;">{{ comment.user.name|first|upper }}</div>
+            <div class="user-info"><div class="name">{{ comment.user.name|truncatechars:14 }}</div></div>
+          </div>
+        </td>
+        <td style="max-width:280px;">
+          <div style="font-size:13px; color:var(--muted-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ comment.text }}</div>
+        </td>
+        <td style="font-size:12px; color:var(--muted)"><a href="{% url 'content:detail' comment.content.pk %}" target="_blank" style="color:var(--accent-2); text-decoration:none;">{{ comment.content.title|truncatechars:24 }}</a></td>
+        <td style="font-size:11px; color:var(--muted)">{{ comment.created_at|date:"M d, Y" }}</td>
+        <td style="text-align:right;">
+          <button onclick="deleteComment({{ comment.pk }})" class="btn btn-danger btn-sm btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><p>No comments found</p></div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if comments.has_other_pages %}
+  <div class="pagination">
+    {% if comments.has_previous %}<a href="?page={{ comments.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="page-link">‹</a>{% endif %}
+    {% for num in comments.paginator.page_range %}<a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if comments.number == num %}active{% endif %}">{{ num }}</a>{% endfor %}
+    {% if comments.has_next %}<a href="?page={{ comments.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="page-link">›</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function deleteComment(pk) {
+  if (!confirm('Delete this comment?')) return;
+  fetch(`/admin-panel/comments/${pk}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCsrf() }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.deleted) {
+      const row = document.getElementById(`comment-${pk}`);
+      row.style.opacity = '0';
+      row.style.transition = 'opacity 0.3s';
+      setTimeout(() => row.remove(), 300);
+      showToast('Comment deleted', 'success');
+    }
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}Content — Streamify Admin{% endblock %}
+{% block nav_content %}active{% endblock %}
+{% block header_title %}Content{% endblock %}
+
+{% block header_actions %}
+<span style="font-size:12px; color:var(--muted);">{{ total_count }} items</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Content</h1>
+    <p>Manage, publish and moderate all media</p>
+  </div>
+</div>
+
+<div class="panel">
+  <!-- Filters -->
+  <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display:flex; gap:10px; flex-wrap:wrap;">
+    <form method="GET" style="display:flex; gap:10px; flex:1; flex-wrap:wrap; align-items:center;">
+      <div class="search-bar" style="flex:1; min-width:200px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" name="q" value="{{ q }}" placeholder="Search title or artist...">
+      </div>
+      <select name="type" class="filter-select" onchange="this.form.submit()">
+        <option value="">All Types</option>
+        <option value="music" {% if ctype == 'music' %}selected{% endif %}>Music</option>
+        <option value="video" {% if ctype == 'video' %}selected{% endif %}>Video</option>
+        <option value="podcast" {% if ctype == 'podcast' %}selected{% endif %}>Podcast</option>
+      </select>
+      <select name="status" class="filter-select" onchange="this.form.submit()">
+        <option value="">All Status</option>
+        <option value="published" {% if status == 'published' %}selected{% endif %}>Published</option>
+        <option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option>
+        <option value="premium" {% if status == 'premium' %}selected{% endif %}>Premium</option>
+      </select>
+      <button type="submit" class="btn btn-ghost btn-sm">Search</button>
+      {% if q or ctype or status %}
+      <a href="{% url 'admin_panel:content' %}" class="btn btn-ghost btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Content</th>
+        <th>Type</th>
+        <th>Creator</th>
+        <th>Views</th>
+        <th>Likes</th>
+        <th>Premium</th>
+        <th>Published</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in content %}
+      <tr id="content-row-{{ item.pk }}">
+        <td style="max-width:240px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            {% if item.thumbnail %}
+            <img src="{{ item.thumbnail.url }}" style="width:36px; height:36px; border-radius:6px; object-fit:cover; flex-shrink:0;">
+            {% else %}
+            <div style="width:36px; height:36px; border-radius:6px; background:var(--bg-4); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            </div>
+            {% endif %}
+            <div>
+              <div style="font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px;" title="{{ item.title }}">{{ item.title }}</div>
+              {% if item.artist_name %}<div style="font-size:11px; color:var(--muted)">{{ item.artist_name }}</div>{% endif %}
+            </div>
+          </div>
+        </td>
+        <td><span class="badge badge-{% if item.content_type == 'music' %}green{% elif item.content_type == 'video' %}blue{% else %}amber{% endif %}">{{ item.content_type }}</span></td>
+        <td style="font-size:12px; color:var(--muted-2)">{{ item.uploaded_by.name|truncatechars:16 }}</td>
+        <td style="font-size:13px; color:var(--muted-2)">{{ item.view_count }}</td>
+        <td style="font-size:13px; color:var(--muted-2)">{{ item.like_count }}</td>
+        <td>
+          {% if item.is_premium %}
+          <span class="badge badge-amber">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Premium
+          </span>
+          {% else %}
+          <span style="font-size:11px; color:var(--muted)">Free</span>
+          {% endif %}
+        </td>
+        <td>
+          <label class="toggle">
+            <input type="checkbox" {% if item.is_published %}checked{% endif %}
+                   onchange="togglePublish({{ item.pk }}, this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </td>
+        <td style="text-align:right;">
+          <div style="display:flex; gap:6px; justify-content:flex-end;">
+            <a href="{% url 'content:detail' item.pk %}" target="_blank" class="btn btn-ghost btn-sm btn-icon" title="View on site">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+            <button onclick="confirmDelete({{ item.pk }}, '{{ item.title|escapejs }}')" class="btn btn-danger btn-sm btn-icon" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8"><div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        <p>No content found</p>
+      </div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if content.has_other_pages %}
+  <div class="pagination">
+    {% if content.has_previous %}<a href="?page={{ content.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="page-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></a>{% endif %}
+    {% for num in content.paginator.page_range %}<a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if content.number == num %}active{% endif %}">{{ num }}</a>{% endfor %}
+    {% if content.has_next %}<a href="?page={{ content.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="page-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></a>{% endif %}
+    <span style="margin-left:auto; font-size:12px; color:var(--muted)">Page {{ content.number }} of {{ content.paginator.num_pages }}</span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-title">Delete Content?</div>
+    <p class="modal-desc" id="deleteModalDesc">This will permanently remove the content and cannot be undone.</p>
+    <form id="deleteForm" method="POST">
+      {% csrf_token %}
+      <div class="modal-actions">
+        <button type="button" onclick="closeModal()" class="btn btn-ghost">Cancel</button>
+        <button type="submit" class="btn btn-danger">Delete Permanently</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePublish(contentId, checkbox) {
+  postToggle(`/admin-panel/content/${contentId}/toggle-publish/`, data => {
+    showToast(`"${data.title}" ${data.published ? 'published' : 'unpublished'}`, data.published ? 'success' : 'error');
+  });
+}
+
+function confirmDelete(contentId, title) {
+  document.getElementById('deleteModalDesc').textContent = `Delete "${title}"? This cannot be undone.`;
+  document.getElementById('deleteForm').action = `/admin-panel/content/${contentId}/delete/`;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+}
+
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+{% endblock %}

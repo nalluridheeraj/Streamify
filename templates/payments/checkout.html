@@ -1,0 +1,32 @@
+{% extends 'base/base.html' %}
+{% block title %}Checkout - {{ plan.name }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6 col-lg-5">
+        <div class="card bg-dark border-success">
+            <div class="card-header bg-success text-center border-0 py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-star-fill me-2"></i>{{ plan.name }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div class="display-4 fw-bold">₹{{ plan.price }}</div>
+                    <p class="text-muted">for {{ plan.duration_days }} days</p>
+                </div>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Card Number</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="4242 4242 4242 4242" maxlength="19">
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6"><label class="form-label">Expiry</label><input type="text" class="form-control bg-dark text-white border-secondary" placeholder="MM/YY"></div>
+                        <div class="col-6"><label class="form-label">CVV</label><input type="text" class="form-control bg-dark text-white border-secondary" placeholder="123"></div>
+                    </div>
+                    <div class="alert alert-info mt-3 small"><i class="bi bi-info-circle me-1"></i>Proceed to payment securely.</div>
+                    <button type="submit" class="btn btn-success w-100 btn-lg mt-2"><i class="bi bi-lock-fill me-2"></i>Pay ₹{{ plan.price }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

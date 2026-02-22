@@ -1,0 +1,157 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}{{ target_user.name }} — Streamify Admin{% endblock %}
+{% block nav_users %}active{% endblock %}
+{% block header_title %}User Detail{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <a href="{% url 'admin_panel:users' %}" style="font-size:12px; color:var(--muted); text-decoration:none; display:flex; align-items:center; gap:4px; margin-bottom:8px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Users
+    </a>
+    <h1>{{ target_user.name }}</h1>
+    <p>{{ target_user.email }}</p>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:24px;">
+  <!-- Profile Card -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Profile</span>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+        <div style="width:52px; height:52px; border-radius:12px; background:linear-gradient(135deg,#7c5cfc,#5b3fd4); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:22px;">
+          {{ target_user.name|first|upper }}
+        </div>
+        <div>
+          <div style="font-size:16px; font-weight:600;">{{ target_user.name }}</div>
+          <div style="font-size:12px; color:var(--muted);">{{ target_user.email }}</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px;">
+        <div style="background:var(--bg-3); padding:12px; border-radius:9px;">
+          <div style="color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px;">Role</div>
+          <span class="badge badge-{% if target_user.role == 'admin' %}red{% elif target_user.role == 'creator' %}amber{% else %}muted{% endif %}">{{ target_user.role }}</span>
+        </div>
+        <div style="background:var(--bg-3); padding:12px; border-radius:9px;">
+          <div style="color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px;">Status</div>
+          <span class="badge {% if target_user.is_active %}badge-green{% else %}badge-red{% endif %}">{% if target_user.is_active %}Active{% else %}Inactive{% endif %}</span>
+        </div>
+        <div style="background:var(--bg-3); padding:12px; border-radius:9px;">
+          <div style="color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px;">Joined</div>
+          <div>{{ target_user.date_joined|date:"M d, Y" }}</div>
+        </div>
+        <div style="background:var(--bg-3); padding:12px; border-radius:9px;">
+          <div style="color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px;">Subscription</div>
+          {% if target_user.has_active_subscription %}<span class="badge badge-green">Premium</span>{% else %}<span class="badge badge-muted">Free</span>{% endif %}
+        </div>
+      </div>
+
+      {% if target_user.bio %}
+      <div style="margin-top:16px; padding:12px; background:var(--bg-3); border-radius:9px; font-size:13px; color:var(--muted-2);">{{ target_user.bio }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Change Role -->
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">Change Role</span></div>
+    <div class="panel-body">
+      <form method="POST" action="{% url 'admin_panel:change_user_role' target_user.pk %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Current Role: <strong style="color:var(--text)">{{ target_user.get_role_display }}</strong></label>
+          <select name="role" class="form-control">
+            <option value="user" {% if target_user.role == 'user' %}selected{% endif %}>User — Regular member</option>
+            <option value="creator" {% if target_user.role == 'creator' %}selected{% endif %}>Creator — Can upload content</option>
+            <option value="admin" {% if target_user.role == 'admin' %}selected{% endif %}>Admin — Full access</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Role</button>
+      </form>
+
+      <hr class="divider">
+
+      <div style="font-size:12px; color:var(--muted-2);">
+        <div style="margin-bottom:8px; font-weight:500; color:var(--text);">Quick Stats</div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0;">
+          <span>Playlists</span><span style="color:var(--text)">{{ target_user.playlists.count }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-top:1px solid var(--border);">
+          <span>Liked Content</span><span style="color:var(--text)">{{ target_user.likes.count }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-top:1px solid var(--border);">
+          <span>Comments</span><span style="color:var(--text)">{{ target_user.comments.count }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Subscription History -->
+<div class="panel" style="margin-bottom:24px;">
+  <div class="panel-header">
+    <span class="panel-title">Subscription History</span>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>Plan</th><th>Status</th><th>Start</th><th>End</th></tr></thead>
+    <tbody>
+      {% for sub in subscriptions %}
+      <tr>
+        <td>{{ sub.plan.name }}</td>
+        <td><span class="badge badge-{% if sub.status == 'active' %}green{% elif sub.status == 'expired' %}muted{% else %}red{% endif %}">{{ sub.status }}</span></td>
+        <td style="font-size:12px; color:var(--muted)">{{ sub.start_date|date:"M d, Y" }}</td>
+        <td style="font-size:12px; color:var(--muted)">{{ sub.end_date|date:"M d, Y" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" style="text-align:center; color:var(--muted); padding:24px; font-size:13px;">No subscriptions</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Content -->
+{% if content %}
+<div class="panel" style="margin-bottom:24px;">
+  <div class="panel-header"><span class="panel-title">Uploaded Content</span></div>
+  <table class="data-table">
+    <thead><tr><th>Title</th><th>Type</th><th>Views</th><th>Published</th><th>Uploaded</th></tr></thead>
+    <tbody>
+      {% for item in content %}
+      <tr>
+        <td>{{ item.title|truncatechars:40 }}</td>
+        <td><span class="badge badge-blue">{{ item.content_type }}</span></td>
+        <td style="color:var(--muted-2)">{{ item.view_count }}</td>
+        <td><span class="badge {% if item.is_published %}badge-green{% else %}badge-muted{% endif %}">{% if item.is_published %}Yes{% else %}Draft{% endif %}</span></td>
+        <td style="font-size:12px; color:var(--muted)">{{ item.uploaded_at|date:"M d, Y" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- Payments -->
+{% if payments %}
+<div class="panel">
+  <div class="panel-header"><span class="panel-title">Payment History</span></div>
+  <table class="data-table">
+    <thead><tr><th>Amount</th><th>Status</th><th>Method</th><th>Date</th></tr></thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td style="font-weight:600; color:var(--green)">${{ p.amount }}</td>
+        <td><span class="badge badge-{% if p.status == 'completed' %}green{% elif p.status == 'failed' %}red{% else %}muted{% endif %}">{{ p.status }}</span></td>
+        <td style="font-size:12px; color:var(--muted)">{{ p.payment_method }}</td>
+        <td style="font-size:12px; color:var(--muted)">{{ p.payment_date|date:"M d, Y" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

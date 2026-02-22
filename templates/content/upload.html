@@ -1,0 +1,91 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Upload Content - Streamify{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+        <div class="card bg-dark border-secondary">
+            <div class="card-header border-secondary">
+                <h4 class="mb-0"><i class="bi bi-cloud-upload me-2 text-success"></i>Upload Content</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Title *</label>
+                            {{ form.title }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Type *</label>
+                            {{ form.content_type }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Artist Name</label>
+                            {{ form.artist_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Album</label>
+                            {{ form.album }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            {{ form.description }}
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Media File * (audio/video)</label>
+                            {{ form.file_path }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Duration (seconds)</label>
+                            {{ form.duration }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Thumbnail Image</label>
+                            {{ form.thumbnail }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Genres</label>
+                            <div class="row g-2">
+                                {% for choice in form.genre %}
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                {{ form.is_published }}
+                                <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                                    Publish immediately
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                {{ form.is_premium }}
+                                <label class="form-check-label" for="{{ form.is_premium.id_for_label }}">
+                                    Premium content (requires subscription)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-cloud-upload"></i> Upload
+                        </button>
+                        <a href="{% url 'content:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

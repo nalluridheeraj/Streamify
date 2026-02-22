@@ -1,0 +1,135 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}Users — Streamify Admin{% endblock %}
+{% block nav_users %}active{% endblock %}
+{% block header_title %}Users{% endblock %}
+
+{% block header_actions %}
+<span style="font-size:12px; color:var(--muted);">{{ total_count }} total</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Users</h1>
+    <p>Manage user accounts, roles and access</p>
+  </div>
+</div>
+
+<div class="panel">
+  <!-- Filters -->
+  <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+    <form method="GET" style="display:flex; gap:10px; flex:1; flex-wrap:wrap; align-items:center;">
+      <div class="search-bar" style="flex:1; min-width:200px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" name="q" value="{{ q }}" placeholder="Search name or email...">
+      </div>
+      <select name="role" class="filter-select" onchange="this.form.submit()">
+        <option value="">All Roles</option>
+        <option value="user" {% if role == 'user' %}selected{% endif %}>User</option>
+        <option value="creator" {% if role == 'creator' %}selected{% endif %}>Creator</option>
+        <option value="admin" {% if role == 'admin' %}selected{% endif %}>Admin</option>
+      </select>
+      <button type="submit" class="btn btn-ghost btn-sm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search
+      </button>
+      {% if q or role %}
+      <a href="{% url 'admin_panel:users' %}" class="btn btn-ghost btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Role</th>
+        <th>Uploads</th>
+        <th>Payments</th>
+        <th>Joined</th>
+        <th>Status</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="avatar">{{ u.name|first|upper }}</div>
+            <div class="user-info">
+              <div class="name">{{ u.name }}</div>
+              <div class="email">{{ u.email }}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="badge badge-{% if u.role == 'admin' %}red{% elif u.role == 'creator' %}amber{% else %}muted{% endif %}">
+            {{ u.role }}
+          </span>
+        </td>
+        <td style="color:var(--muted-2)">{{ u.content_count }}</td>
+        <td style="color:var(--muted-2)">{{ u.payment_count }}</td>
+        <td style="font-size:12px; color:var(--muted)">{{ u.date_joined|date:"M d, Y" }}</td>
+        <td>
+          <label class="toggle" title="{% if u.is_active %}Active — click to deactivate{% else %}Inactive — click to activate{% endif %}">
+            <input type="checkbox" {% if u.is_active %}checked{% endif %}
+                   onchange="toggleUserActive({{ u.pk }}, this)"
+                   {% if u == request.user %}disabled title="Cannot change own status"{% endif %}>
+            <span class="toggle-slider"></span>
+          </label>
+        </td>
+        <td style="text-align:right;">
+          <a href="{% url 'admin_panel:user_detail' u.pk %}" class="btn btn-ghost btn-sm btn-icon" title="View">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <p>No users found</p>
+        </div>
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  {% if users.has_other_pages %}
+  <div class="pagination">
+    {% if users.has_previous %}
+    <a href="?page={{ users.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if role %}&role={{ role }}{% endif %}" class="page-link">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    {% endif %}
+    {% for num in users.paginator.page_range %}
+    <a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if role %}&role={{ role }}{% endif %}"
+       class="page-link {% if users.number == num %}active{% endif %}">{{ num }}</a>
+    {% endfor %}
+    {% if users.has_next %}
+    <a href="?page={{ users.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if role %}&role={{ role }}{% endif %}" class="page-link">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    {% endif %}
+    <span style="margin-left:auto; font-size:12px; color:var(--muted);">Page {{ users.number }} of {{ users.paginator.num_pages }}</span>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleUserActive(userId, checkbox) {
+  postToggle(`/admin-panel/users/${userId}/toggle-active/`, data => {
+    if (data.error) {
+      checkbox.checked = !checkbox.checked;
+      showToast(data.error, 'error');
+    } else {
+      showToast(`${data.name} ${data.active ? 'activated' : 'deactivated'}`, data.active ? 'success' : 'error');
+    }
+  });
+}
+</script>
+{% endblock %}

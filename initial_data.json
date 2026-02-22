@@ -1,0 +1,78 @@
+[
+  {
+    "model": "content.genre",
+    "pk": 1,
+    "fields": {"name": "Pop", "slug": "pop", "description": "Popular music"}
+  },
+  {
+    "model": "content.genre",
+    "pk": 2,
+    "fields": {"name": "Rock", "slug": "rock", "description": "Rock music"}
+  },
+  {
+    "model": "content.genre",
+    "pk": 3,
+    "fields": {"name": "Hip Hop", "slug": "hip-hop", "description": "Hip hop and rap"}
+  },
+  {
+    "model": "content.genre",
+    "pk": 4,
+    "fields": {"name": "Electronic", "slug": "electronic", "description": "Electronic and EDM"}
+  },
+  {
+    "model": "content.genre",
+    "pk": 5,
+    "fields": {"name": "Jazz", "slug": "jazz", "description": "Jazz music"}
+  },
+  {
+    "model": "content.genre",
+    "pk": 6,
+    "fields": {"name": "Classical", "slug": "classical", "description": "Classical music"}
+  },
+  {
+    "model": "content.genre",
+    "pk": 7,
+    "fields": {"name": "R&B", "slug": "rnb", "description": "R&B and Soul"}
+  },
+  {
+    "model": "content.genre",
+    "pk": 8,
+    "fields": {"name": "Country", "slug": "country", "description": "Country music"}
+  },
+  {
+    "model": "content.genre",
+    "pk": 9,
+    "fields": {"name": "Documentary", "slug": "documentary", "description": "Documentaries"}
+  },
+  {
+    "model": "content.genre",
+    "pk": 10,
+    "fields": {"name": "Comedy", "slug": "comedy", "description": "Comedy videos"}
+  },
+  {
+    "model": "subscriptions.plan",
+    "pk": 1,
+    "fields": {
+      "name": "Monthly Premium",
+      "slug": "monthly-premium",
+      "description": "Full access to all premium content, ad-free experience",
+      "price": "9.99",
+      "duration_days": 30,
+      "features": ["Unlimited streaming", "All premium content", "No ads", "HD quality", "Download for offline"],
+      "is_active": true
+    }
+  },
+  {
+    "model": "subscriptions.plan",
+    "pk": 2,
+    "fields": {
+      "name": "Annual Premium",
+      "slug": "annual-premium",
+      "description": "Best value! Full premium access for a full year",
+      "price": "89.99",
+      "duration_days": 365,
+      "features": ["Everything in Monthly", "Save 25%", "Priority support", "Early access to features", "Family sharing"],
+      "is_active": true
+    }
+  }
+]

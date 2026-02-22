@@ -1,0 +1,24 @@
+{% extends 'base/base.html' %}
+{% block title %}Watchlist - Streamify{% endblock %}
+{% block content %}
+<div class="mt-4">
+    <h3 class="mb-4"><i class="bi bi-bookmark me-2"></i>My Watchlist</h3>
+    <div class="row g-3">
+        {% for item in items %}
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="position-relative">
+                    {% if item.content.thumbnail %}<img src="{{ item.content.thumbnail.url }}" class="card-img-top" style="height:150px;object-fit:cover" alt="">{% else %}<div class="card-img-top d-flex align-items-center justify-content-center bg-secondary" style="height:150px"><i class="bi bi-play-circle" style="font-size:3rem"></i></div>{% endif %}
+                </div>
+                <div class="card-body p-2">
+                    <a href="{% url 'content:detail' item.content.pk %}" class="text-white text-decoration-none"><h6 class="mb-0 text-truncate">{{ item.content.title }}</h6></a>
+                    <small class="text-muted">{{ item.content.artist_name|default:item.content.uploaded_by.name }}</small>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5"><i class="bi bi-bookmark text-muted" style="font-size:4rem"></i><p class="text-muted mt-2">Nothing saved yet.</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

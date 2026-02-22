@@ -1,0 +1,288 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ content.title }} - Streamify{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+<style>
+  :root {
+    --plyr-color-main: #1db954;
+    --plyr-video-background: #000;
+    --plyr-range-fill-background: #1db954;
+    --plyr-badge-background: #1db954;
+    --plyr-menu-background: #1a1a1a;
+    --plyr-menu-color: #fff;
+  }
+  .plyr { border-radius: .375rem .375rem 0 0; }
+  .plyr--full-ui input[type=range] { color: #1db954; }
+  .audio-art {
+    background: linear-gradient(135deg,#1db954,#005c20);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: .375rem .375rem 0 0;
+  }
+  .audio-art img { width:180px;height:180px;object-fit:cover;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.4); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+  <div class="col-lg-8">
+
+    <div class="card bg-dark border-secondary mb-4">
+      {% if can_stream %}
+
+        {% if content.content_type == 'video' or content.content_type == 'podcast' %}
+        <div oncontextmenu="return false;">
+          <video id="plyr-player" playsinline preload="metadata">
+            <source src="{{ content.file_path.url }}" type="video/mp4">
+          </video>
+        </div>
+
+        {% else %}
+        <div class="audio-art">
+          {% if content.thumbnail %}
+          <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}">
+          {% else %}
+          <div style="width:180px;height:180px;background:rgba(0,0,0,.3);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-music-note-beamed text-white" style="font-size:4rem;"></i>
+          </div>
+          {% endif %}
+          <h5 class="text-white fw-bold mt-3 mb-1">{{ content.title }}</h5>
+          <p class="text-light mb-0">{{ content.artist_name|default:content.uploaded_by.name }}</p>
+        </div>
+        <div oncontextmenu="return false;" style="padding:0 0 8px;">
+          <audio id="plyr-player" preload="metadata">
+            <source src="{{ content.file_path.url }}">
+          </audio>
+        </div>
+        {% endif %}
+
+      {% else %}
+      <div class="p-5 text-center">
+        <i class="bi bi-lock-fill text-warning" style="font-size:4rem"></i>
+        <h4 class="mt-3 text-warning">Premium Content</h4>
+        <p class="text-muted">Subscribe to stream this content</p>
+        <a href="{% url 'subscriptions:plans' %}" class="btn btn-warning btn-lg">
+          <i class="bi bi-star"></i> Get Premium
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Content Info -->
+    <div class="card bg-dark border-secondary mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h3 class="fw-bold mb-1">{{ content.title }}</h3>
+            {% if content.artist_name %}
+            <p class="text-success mb-1"><i class="bi bi-person"></i> {{ content.artist_name }}</p>
+            {% endif %}
+            {% if content.album %}
+            <p class="text-muted mb-1"><i class="bi bi-disc"></i> {{ content.album }}</p>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2">
+            {% if user.is_authenticated %}
+            <button class="btn btn-outline-danger btn-sm" data-content-id="{{ content.pk }}" id="like-btn">
+              <i class="bi bi-heart{% if user_liked %}-fill{% endif %}"></i>
+              <span id="like-count">{{ content.like_count }}</span>
+            </button>
+            <a href="{% url 'playlists:toggle_watchlist' content.pk %}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-bookmark-plus"></i> Save
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-3 my-3 text-muted small">
+          <span><i class="bi bi-eye me-1"></i>{{ content.view_count }} views</span>
+          <span><i class="bi bi-heart me-1"></i><span id="like-count-2">{{ content.like_count }}</span> likes</span>
+          <span><i class="bi bi-chat me-1"></i>{{ content.comment_count }} comments</span>
+          <span><i class="bi bi-clock me-1"></i>{{ content.duration_display }}</span>
+          <span><i class="bi bi-calendar me-1"></i>{{ content.uploaded_at|date:"M d, Y" }}</span>
+          {% if content.is_premium %}
+          <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Premium</span>
+          {% endif %}
+        </div>
+        {% if content.genre.exists %}
+        <div class="mb-3">
+          {% for genre in content.genre.all %}
+          <a href="{% url 'content:list' %}?genre={{ genre.slug }}" class="badge bg-secondary text-decoration-none me-1">{{ genre.name }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if content.description %}
+        <p class="text-muted">{{ content.description }}</p>
+        {% endif %}
+        <div class="d-flex gap-2 align-items-center mt-2">
+          <img src="{% if content.uploaded_by.profile_picture %}{{ content.uploaded_by.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ content.uploaded_by.name|urlencode }}&background=1db954&color=fff{% endif %}"
+               class="rounded-circle" width="32" height="32" style="object-fit:cover">
+          <span class="text-light">{{ content.uploaded_by.name }}</span>
+        </div>
+        {% if user.is_authenticated and user == content.uploaded_by or user.is_admin %}
+        <div class="mt-3 d-flex gap-2">
+          <a href="{% url 'content:edit' content.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Edit</a>
+          <a href="{% url 'content:delete' content.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="card bg-dark border-secondary">
+      <div class="card-body">
+        <h5 class="mb-3"><i class="bi bi-chat-dots me-2"></i>Comments ({{ content.comment_count }})</h5>
+        {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'content:comment' content.pk %}" class="mb-4">
+          {% csrf_token %}
+          <div class="d-flex gap-2">
+            <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ user.name|urlencode }}&background=1db954&color=fff{% endif %}"
+                 class="rounded-circle" width="36" height="36" style="object-fit:cover">
+            <div class="flex-grow-1">
+              <textarea name="text" class="form-control bg-dark text-white border-secondary" rows="2" placeholder="Add a comment..."></textarea>
+              <button type="submit" class="btn btn-success btn-sm mt-2"><i class="bi bi-send"></i> Post Comment</button>
+            </div>
+          </div>
+        </form>
+        {% else %}
+        <div class="alert alert-secondary"><a href="{% url 'users:login' %}">Login</a> to post a comment.</div>
+        {% endif %}
+        {% for comment in comments %}
+        <div class="d-flex gap-2 mb-3">
+          <img src="{% if comment.user.profile_picture %}{{ comment.user.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ comment.user.name|urlencode }}&background=555&color=fff{% endif %}"
+               class="rounded-circle flex-shrink-0" width="36" height="36" style="object-fit:cover">
+          <div class="flex-grow-1">
+            <div class="bg-secondary bg-opacity-25 rounded p-2 {% if comment.user == content.uploaded_by %}border border-success border-opacity-50{% endif %}">
+              <strong class="text-light small">{{ comment.user.name }}</strong>
+              {% if comment.user == content.uploaded_by %}<span class="badge bg-success ms-1" style="font-size:10px;">Author</span>{% endif %}
+              <span class="text-muted small ms-2">{{ comment.created_at|timesince }} ago</span>
+              <p class="mb-0 mt-1">{{ comment.text }}</p>
+            </div>
+            {% if user.is_authenticated and user == comment.user or user.is_admin %}
+            <a href="{% url 'content:delete_comment' comment.pk %}" class="text-danger small"><i class="bi bi-trash"></i> Delete</a>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-muted text-center py-3">No comments yet. Be the first!</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <h5 class="mb-3">Up Next</h5>
+    {% for item in related %}
+    <div class="card bg-dark border-secondary mb-2">
+      <div class="row g-0">
+        <div class="col-4">
+          {% if item.thumbnail %}
+          <img src="{{ item.thumbnail.url }}" class="img-fluid rounded-start h-100" style="object-fit:cover;max-height:80px" alt="">
+          {% else %}
+          <div class="d-flex align-items-center justify-content-center h-100 bg-secondary rounded-start" style="min-height:70px">
+            <i class="bi bi-{% if item.content_type == 'music' %}music-note{% else %}play-circle{% endif %}"></i>
+          </div>
+          {% endif %}
+        </div>
+        <div class="col-8">
+          <div class="card-body p-2">
+            <a href="{% url 'content:detail' item.pk %}" class="text-decoration-none text-white">
+              <p class="card-text small fw-bold mb-0 text-truncate">{{ item.title }}</p>
+            </a>
+            <small class="text-muted">{{ item.artist_name|default:item.uploaded_by.name }}</small>
+            <div class="mt-1"><small class="text-muted"><i class="bi bi-eye"></i> {{ item.view_count }}</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <p class="text-muted">No related content found.</p>
+    {% endfor %}
+    {% if user.is_authenticated %}
+    <div class="mt-4">
+      <h6>Add to Playlist</h6>
+      {% with user_playlists=user.playlists.all %}
+      {% if user_playlists %}
+      <form method="POST" action="{% url 'playlists:add_to_playlist' content.pk %}">
+        {% csrf_token %}
+        <div class="input-group">
+          <select name="playlist_id" class="form-select form-select-sm bg-dark text-white border-secondary">
+            {% for playlist in user_playlists %}<option value="{{ playlist.pk }}">{{ playlist.name }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-plus"></i></button>
+        </div>
+      </form>
+      {% else %}
+      <a href="{% url 'playlists:create' %}" class="btn btn-outline-success btn-sm w-100"><i class="bi bi-plus-circle"></i> Create Playlist</a>
+      {% endif %}
+      {% endwith %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  var playerEl = document.getElementById('plyr-player');
+  if (playerEl) {
+    var player = new Plyr('#plyr-player', {
+      controls: [
+        'play-large',
+        'play',
+        'rewind',
+        'fast-forward',
+        'progress',
+        'current-time',
+        'duration',
+        'mute',
+        'volume',
+        'speed',
+        'fullscreen'
+      ],
+      speed: {
+        selected: 1,
+        options: [0.25, 0.5, 0.75, 1, 1.5, 2, 3]
+      },
+      seekTime: 5,
+      keyboard: { focused: false, global: true },
+      tooltips: { controls: true, seek: true },
+      disableContextMenu: true,
+    });
+  }
+
+  // Like button
+  var likeBtn = document.getElementById('like-btn');
+  if (likeBtn) {
+    likeBtn.addEventListener('click', function () {
+      var id = this.dataset.contentId;
+      fetch('/content/' + id + '/like/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' }
+      }).then(function(r){ return r.json(); }).then(function(data) {
+        likeBtn.querySelector('i').className = data.liked ? 'bi bi-heart-fill' : 'bi bi-heart';
+        document.getElementById('like-count').textContent = data.count;
+        document.getElementById('like-count-2').textContent = data.count;
+      });
+    });
+  }
+
+  function getCookie(name) {
+    var val = null;
+    document.cookie.split(';').forEach(function(c) {
+      c = c.trim();
+      if (c.startsWith(name + '=')) val = decodeURIComponent(c.substring(name.length + 1));
+    });
+    return val;
+  }
+});
+</script>
+{% endblock %}

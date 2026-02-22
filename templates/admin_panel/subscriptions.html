@@ -1,0 +1,71 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}Subscriptions — Streamify Admin{% endblock %}
+{% block nav_subs %}active{% endblock %}
+{% block header_title %}Subscriptions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Subscriptions</h1><p>Monitor all user subscriptions</p></div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:24px;">
+  <div class="stat-card" style="--card-accent:#22d98a; --card-icon-bg:rgba(34,217,138,0.15);">
+    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22d98a" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+    <div class="stat-value">{{ stats.active }}</div><div class="stat-label">Active</div>
+  </div>
+  <div class="stat-card" style="--card-accent:#6b6b85; --card-icon-bg:rgba(107,107,133,0.15);">
+    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6b6b85" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+    <div class="stat-value">{{ stats.expired }}</div><div class="stat-label">Expired</div>
+  </div>
+  <div class="stat-card" style="--card-accent:#ff5370; --card-icon-bg:rgba(255,83,112,0.15);">
+    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ff5370" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    <div class="stat-value">{{ stats.cancelled }}</div><div class="stat-label">Cancelled</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center;">
+    <form method="GET" style="display:flex; gap:10px;">
+      <select name="status" class="filter-select" onchange="this.form.submit()">
+        <option value="">All Status</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+        <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>Expired</option>
+        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+      {% if status_filter %}<a href="{% url 'admin_panel:subscriptions' %}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+    </form>
+    <div style="margin-left:auto;">
+      <a href="{% url 'admin_panel:plans' %}" class="btn btn-ghost btn-sm">Manage Plans →</a>
+    </div>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>User</th><th>Plan</th><th>Status</th><th>Start</th><th>End</th></tr></thead>
+    <tbody>
+      {% for sub in subscriptions %}
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="avatar">{{ sub.user.name|first|upper }}</div>
+            <div class="user-info"><div class="name">{{ sub.user.name }}</div><div class="email">{{ sub.user.email }}</div></div>
+          </div>
+        </td>
+        <td><span class="badge badge-purple">{{ sub.plan.name }}</span></td>
+        <td><span class="badge badge-{% if sub.status == 'active' %}green{% elif sub.status == 'expired' %}muted{% else %}red{% endif %}">{{ sub.status }}</span></td>
+        <td style="font-size:12px; color:var(--muted)">{{ sub.start_date|date:"M d, Y" }}</td>
+        <td style="font-size:12px; color:var(--muted)">{{ sub.end_date|date:"M d, Y" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><p>No subscriptions found</p></div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if subscriptions.has_other_pages %}
+  <div class="pagination">
+    {% if subscriptions.has_previous %}<a href="?page={{ subscriptions.previous_page_number }}" class="page-link">‹</a>{% endif %}
+    {% for num in subscriptions.paginator.page_range %}<a href="?page={{ num }}" class="page-link {% if subscriptions.number == num %}active{% endif %}">{{ num }}</a>{% endfor %}
+    {% if subscriptions.has_next %}<a href="?page={{ subscriptions.next_page_number }}" class="page-link">›</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

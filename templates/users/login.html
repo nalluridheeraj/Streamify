@@ -1,0 +1,35 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Sign In - Streamify{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh">
+    <div class="col-md-5 col-lg-4">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold"><i class="bi bi-music-note-beamed text-success"></i> Streamify</h2>
+            <p class="text-muted">Welcome back</p>
+        </div>
+        <div class="card bg-dark border-secondary">
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        {{ form.email }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        {{ form.password }}
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 mb-3">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </button>
+                    <p class="text-center text-muted mb-0">
+                        Don't have an account? <a href="{% url 'users:register' %}" class="text-success">Sign up free</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

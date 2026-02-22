@@ -1,0 +1,39 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}Plans — Streamify Admin{% endblock %}
+{% block nav_plans %}active{% endblock %}
+{% block header_title %}Plans{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Subscription Plans</h1><p>Create and manage pricing plans</p></div>
+  <div class="page-header-right"><a href="{% url 'admin_panel:create_plan' %}" class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Plan</a></div>
+</div>
+<div class="grid-2">
+  {% for plan in plans %}
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">{{ plan.name }}</span>
+      <div class="panel-actions">
+        <span class="badge {% if plan.is_active %}badge-green{% else %}badge-muted{% endif %}">{% if plan.is_active %}Active{% else %}Inactive{% endif %}</span>
+        <a href="{% url 'admin_panel:edit_plan' plan.pk %}" class="btn btn-ghost btn-sm btn-icon" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
+        <form method="POST" action="{% url 'admin_panel:delete_plan' plan.pk %}" style="display:inline" onsubmit="return confirm('Delete this plan?')"><button type="submit" class="btn btn-danger btn-sm btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>{% csrf_token %}</form>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:12px;">
+        <span style="font-family:'Syne',sans-serif; font-size:32px; font-weight:400; color:var(--accent-2)">₹{{ plan.price }}</span>
+        <span style="font-size:12px; color:var(--muted)">/ {{ plan.duration_days }} days</span>
+      </div>
+      <p style="font-size:12px; color:var(--muted-2); margin-bottom:12px;">{{ plan.description }}</p>
+      {% if plan.features %}
+      <ul style="list-style:none; font-size:12px; display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
+        {% for feature in plan.features %}<li style="display:flex; align-items:center; gap:8px; color:var(--muted-2)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ feature }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      <div style="font-size:12px; color:var(--muted); padding-top:12px; border-top:1px solid var(--border);">{{ plan.sub_count }} subscriber{{ plan.sub_count|pluralize }}</div>
+    </div>
+  </div>
+  {% empty %}
+  <div style="grid-column:1/-1;" class="panel"><div class="panel-body"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg><p>No plans yet. Create your first plan!</p></div></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

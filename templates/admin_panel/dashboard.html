@@ -1,0 +1,289 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}Dashboard — Streamify Admin{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Stats -->
+<div class="stats-grid">
+  <div class="stat-card" style="--card-accent: #7c5cfc; --card-icon-bg: rgba(124,92,252,0.15);">
+    <div class="stat-delta delta-up">+{{ new_users_30d }} new</div>
+    <div class="stat-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7c5cfc" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div class="stat-value">{{ total_users|default:"0" }}</div>
+    <div class="stat-label">Total Users</div>
+  </div>
+
+  <div class="stat-card" style="--card-accent: #4dc4ff; --card-icon-bg: rgba(77,196,255,0.15);">
+    <div class="stat-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#4dc4ff" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+    </div>
+    <div class="stat-value">{{ published_content }}<span style="font-size:14px; color:var(--muted)"> /{{ total_content }}</span></div>
+    <div class="stat-label">Published Content</div>
+  </div>
+
+  <div class="stat-card" style="--card-accent: #22d98a; --card-icon-bg: rgba(34,217,138,0.15);">
+    <div class="stat-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#22d98a" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div class="stat-value">{{ active_subs }}</div>
+    <div class="stat-label">Active Subscriptions</div>
+  </div>
+
+  <div class="stat-card" style="--card-accent: #ffb86c; --card-icon-bg: rgba(255,184,108,0.15);">
+    <div class="stat-delta delta-up">₹{{ revenue_30d|floatformat:0 }} /30d</div>
+    <div class="stat-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ffb86c" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    </div>
+    <div class="stat-value">₹{{ total_revenue|floatformat:0 }}</div>
+    <div class="stat-label">Total Revenue</div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid-2" style="margin-bottom: 24px;">
+  <div class="panel">
+    <div class="panel-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-2)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span class="panel-title">User Growth</span>
+      <div style="margin-left:auto; font-size:11px; color:var(--muted);">Last 30 days</div>
+    </div>
+    <div class="panel-body">
+      <div class="chart-container" style="height: 180px;">
+        <canvas id="userGrowthChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffb86c" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span class="panel-title">Revenue</span>
+      <div style="margin-left:auto; font-size:11px; color:var(--muted);">Last 30 days</div>
+    </div>
+    <div class="panel-body">
+      <div class="chart-container" style="height: 180px;">
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Content by Type + Recent Activity -->
+<div class="grid-2" style="margin-bottom: 24px;">
+  <div class="panel">
+    <div class="panel-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      <span class="panel-title">Content by Type</span>
+    </div>
+    <div class="panel-body" style="display:flex; align-items:center; gap:24px;">
+      <div style="flex: 0 0 140px; height: 140px;">
+        <canvas id="contentTypeChart"></canvas>
+      </div>
+      <div id="contentTypeLegend" style="flex:1; font-size:12px; display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="panel-title">Top Content</span>
+    </div>
+    <div class="panel-body" style="padding: 0;">
+      <table class="data-table">
+        <thead><tr><th>Title</th><th>Views</th><th>Type</th></tr></thead>
+        <tbody>
+          {% for item in top_content %}
+          <tr>
+            <td>
+              <div style="font-size:13px; font-weight:500; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ item.title }}</div>
+              <div style="font-size:11px; color:var(--muted)">{{ item.artist_name|default:item.uploaded_by.name }}</div>
+            </td>
+            <td style="font-weight:600; color:var(--text)">{{ item.view_count }}</td>
+            <td><span class="badge badge-{% if item.content_type == 'music' %}green{% elif item.content_type == 'video' %}blue{% else %}amber{% endif %}">{{ item.content_type }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="empty-state" style="padding:30px; text-align:center; color:var(--muted); font-size:13px;">No content yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Tables Row -->
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-2)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span class="panel-title">Recent Users</span>
+      <div class="panel-actions">
+        <a href="{% url 'admin_panel:users' %}" class="btn btn-ghost btn-sm">View All</a>
+      </div>
+    </div>
+    <div style="padding: 0;">
+      <table class="data-table">
+        <thead><tr><th>User</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody>
+          {% for u in recent_users %}
+          <tr>
+            <td>
+              <div class="user-cell">
+                <div class="avatar">{{ u.name|first|upper }}</div>
+                <div class="user-info">
+                  <div class="name">{{ u.name|truncatechars:18 }}</div>
+                  <div class="email">{{ u.email|truncatechars:22 }}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge badge-{% if u.role == 'admin' %}red{% elif u.role == 'creator' %}amber{% else %}muted{% endif %}">{{ u.role }}</span></td>
+            <td style="font-size:11px; color:var(--muted)">{{ u.date_joined|date:"M d" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffb86c" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span class="panel-title">Recent Payments</span>
+      <div class="panel-actions">
+        <a href="{% url 'admin_panel:payments' %}" class="btn btn-ghost btn-sm">View All</a>
+      </div>
+    </div>
+    <div style="padding: 0;">
+      <table class="data-table">
+        <thead><tr><th>User</th><th>Plan</th><th>Amount</th></tr></thead>
+        <tbody>
+          {% for p in recent_payments %}
+          <tr>
+            <td style="font-size:12px;">{{ p.user.name|truncatechars:18 }}</td>
+            <td style="font-size:12px; color:var(--muted)">{{ p.subscription.plan.name|default:"—"|truncatechars:16 }}</td>
+            <td style="font-weight:600; color:var(--green)">₹{{ p.amount }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="padding:30px; text-align:center; color:var(--muted); font-size:13px;">No payments yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const userGrowthData = {{ user_growth_json|safe }};
+const revenueData = {{ revenue_chart_json|safe }};
+const contentTypeData = {{ content_by_type_json|safe }};
+
+Chart.defaults.color = '#6b6b85';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+// Fill in missing dates
+function fillDates(data, key, valueKey) {
+  if (!data.length) return { labels: [], values: [] };
+  const labels = data.map(d => {
+    const dt = new Date(d[key]);
+    return dt.toLocaleDateString('en', { month:'short', day:'numeric' });
+  });
+  const values = data.map(d => +d[valueKey]);
+  return { labels, values };
+}
+
+// User Growth Chart
+const ug = fillDates(userGrowthData, 'day', 'count');
+new Chart(document.getElementById('userGrowthChart'), {
+  type: 'line',
+  data: {
+    labels: ug.labels,
+    datasets: [{
+      data: ug.values,
+      borderColor: '#7c5cfc',
+      backgroundColor: 'rgba(124,92,252,0.1)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0,
+      borderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 4, font: { size: 10 } } }
+    }
+  }
+});
+
+// Revenue Chart
+const rv = fillDates(revenueData, 'day', 'total');
+new Chart(document.getElementById('revenueChart'), {
+  type: 'bar',
+  data: {
+    labels: rv.labels,
+    datasets: [{
+      data: rv.values,
+      backgroundColor: 'rgba(255,184,108,0.6)',
+      borderRadius: 4,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 4, font: { size: 10 }, callback: v => '₹' + v } }
+    }
+  }
+});
+
+// Content Type Donut
+const typeColors = { music: '#22d98a', video: '#4dc4ff', podcast: '#ffb86c' };
+const typeLabels = contentTypeData.map(d => d.content_type || 'unknown');
+const typeValues = contentTypeData.map(d => d.count);
+const typeColorArr = typeLabels.map(l => typeColors[l] || '#7c5cfc');
+
+new Chart(document.getElementById('contentTypeChart'), {
+  type: 'doughnut',
+  data: {
+    labels: typeLabels,
+    datasets: [{
+      data: typeValues,
+      backgroundColor: typeColorArr,
+      borderWidth: 0,
+      spacing: 3,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: { legend: { display: false } }
+  }
+});
+
+// Legend
+const legend = document.getElementById('contentTypeLegend');
+const total = typeValues.reduce((a, b) => a + b, 0);
+typeLabels.forEach((label, i) => {
+  const pct = total ? Math.round((typeValues[i] / total) * 100) : 0;
+  legend.innerHTML += `
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div style="width:8px; height:8px; border-radius:50%; background:₹{typeColorArr[i]}; flex-shrink:0;"></div>
+      <span style="text-transform:capitalize; color:var(--text);">₹{label}</span>
+      <span style="margin-left:auto; color:var(--muted);">₹{typeValues[i]} <span style="color:var(--muted)">(₹{pct}%)</span></span>
+    </div>
+  `;
+});
+</script>
+{% endblock %}

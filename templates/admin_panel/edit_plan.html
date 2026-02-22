@@ -1,0 +1,38 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}{% if plan %}Edit{% else %}Create{% endif %} Plan — Streamify Admin{% endblock %}
+{% block nav_plans %}active{% endblock %}
+{% block header_title %}{% if plan %}Edit Plan{% else %}New Plan{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <a href="{% url 'admin_panel:plans' %}" style="font-size:12px; color:var(--muted); text-decoration:none; display:flex; align-items:center; gap:4px; margin-bottom:8px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>Back to Plans</a>
+    <h1>{% if plan %}Edit: {{ plan.name }}{% else %}Create New Plan{% endif %}</h1>
+  </div>
+</div>
+<div style="max-width:560px;">
+  <div class="panel">
+    <div class="panel-body">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-group"><label class="form-label">Plan Name</label><input type="text" name="name" class="form-control" value="{{ plan.name|default:'' }}" placeholder="e.g. Monthly Premium" required></div>
+        <div class="form-group"><label class="form-label">Slug (URL-friendly)</label><input type="text" name="slug" class="form-control" value="{{ plan.slug|default:'' }}" placeholder="e.g. monthly-premium" required></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group"><label class="form-label">Price ($)</label><input type="number" name="price" class="form-control" value="{{ plan.price|default:'9.99' }}" step="0.01" min="0" required></div>
+          <div class="form-group"><label class="form-label">Duration (days)</label><input type="number" name="duration_days" class="form-control" value="{{ plan.duration_days|default:'30' }}" min="1" required></div>
+        </div>
+        <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control">{{ plan.description|default:'' }}</textarea></div>
+        <div class="form-group"><label class="form-label">Features (one per line)</label><textarea name="features" class="form-control" rows="6" placeholder="Unlimited streaming&#10;No ads&#10;HD quality">{% if plan.features %}{% for f in plan.features %}{{ f }}
+{% endfor %}{% endif %}</textarea></div>
+        <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+          <label class="toggle"><input type="checkbox" name="is_active" {% if not plan or plan.is_active %}checked{% endif %}><span class="toggle-slider"></span></label>
+          <span style="font-size:13px; color:var(--muted-2)">Plan is active and visible to users</span>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="submit" class="btn btn-primary">{% if plan %}Save Changes{% else %}Create Plan{% endif %}</button>
+          <a href="{% url 'admin_panel:plans' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
