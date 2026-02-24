@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 
 class Genre(models.Model):
@@ -22,8 +23,15 @@ class Content(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     content_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    file_path = models.FileField(upload_to='content/')
-    thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
+    file_path = CloudinaryField(
+    resource_type='auto'
+)
+
+    thumbnail = CloudinaryField(
+    resource_type='image',
+    blank=True,
+    null=True
+)
     duration = models.PositiveIntegerField(help_text='Duration in seconds', default=0)
     genre = models.ManyToManyField(Genre, blank=True, related_name='content', db_table='content_genres')
     uploaded_by = models.ForeignKey(
