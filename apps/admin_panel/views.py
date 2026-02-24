@@ -86,14 +86,23 @@ def dashboard_view(request):
         .annotate(count=Count('id'))
         .order_by('-count')
     )
-
     # Recent activity
     recent_users = User.objects.order_by('-date_joined')[:5]
-    recent_payments = Payment.objects.filter(status='completed').order_by('-payment_date').select_related('user', 'subscription__plan')[:5]
-    recent_content = Content.objects.order_by('-uploaded_at').select_related('uploaded_by')[:5]
+
+    recent_payments = Payment.objects.filter(
+        status='completed'
+    ).order_by('-payment_date').select_related(
+        'user', 'subscription__plan'
+    )[:5]
+
+    recent_content = Content.objects.order_by(
+        '-uploaded_at'
+    ).select_related('uploaded_by')[:5]
 
     # Top content
-    top_content = Content.objects.filter(is_published=True).order_by('-view_count')[:5]
+    top_content = Content.objects.filter(
+        is_published=True
+    ).order_by('-view_count')[:5]
 
     context = {
         'total_users': total_users,
@@ -113,27 +122,32 @@ def dashboard_view(request):
     }
     return render(request, 'admin_panel/dashboard.html', context)
 
-
-# ──────────────────────────────────────────────
-# USERS
-# ──────────────────────────────────────────────
+    # ──────────────────────────────────────────────
+    # USERS
+    # ──────────────────────────────────────────────
 
 @admin_required
 def users_list_view(request):
     q = request.GET.get('q', '')
     role = request.GET.get('role', '')
+
     qs = User.objects.annotate(
         content_count=Count('uploaded_content', distinct=True),
         payment_count=Count('payments', distinct=True),
     ).order_by('-date_joined')
+
     if q:
         qs = qs.filter(Q(name__icontains=q) | Q(email__icontains=q))
     if role:
         qs = qs.filter(role=role)
+
     paginator = Paginator(qs, 20)
     users = paginator.get_page(request.GET.get('page', 1))
+
     return render(request, 'admin_panel/users.html', {
-        'users': users, 'q': q, 'role': role,
+        'users': users,
+        'q': q,
+        'role': role,
         'total_count': qs.count(),
     })
 
@@ -144,6 +158,7 @@ def user_detail_view(request, pk):
     subscriptions = user.subscriptions.all().order_by('-created_at')
     payments = user.payments.all().order_by('-payment_date')[:10]
     content = user.uploaded_content.all().order_by('-uploaded_at')[:10]
+
     return render(request, 'admin_panel/user_detail.html', {
         'target_user': user,
         'subscriptions': subscriptions,
@@ -156,10 +171,13 @@ def user_detail_view(request, pk):
 @require_POST
 def toggle_user_active_view(request, pk):
     user = get_object_or_404(User, pk=pk)
+
     if user == request.user:
         return JsonResponse({'error': 'Cannot deactivate yourself'}, status=400)
+
     user.is_active = not user.is_active
     user.save(update_fields=['is_active'])
+
     return JsonResponse({'active': user.is_active, 'name': user.name})
 
 
@@ -168,12 +186,14 @@ def toggle_user_active_view(request, pk):
 def change_user_role_view(request, pk):
     user = get_object_or_404(User, pk=pk)
     new_role = request.POST.get('role')
+
     if new_role in ('user', 'creator', 'admin'):
         user.role = new_role
         if new_role == 'admin':
             user.is_staff = True
         user.save(update_fields=['role', 'is_staff'])
         messages.success(request, f'Role updated to {new_role} for {user.name}.')
+
     return redirect('admin_panel:user_detail', pk=pk)
 
 

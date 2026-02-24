@@ -273,15 +273,20 @@ new Chart(document.getElementById('contentTypeChart'), {
 });
 
 // Legend
+// Legend
 const legend = document.getElementById('contentTypeLegend');
 const total = typeValues.reduce((a, b) => a + b, 0);
+
 typeLabels.forEach((label, i) => {
   const pct = total ? Math.round((typeValues[i] / total) * 100) : 0;
+
   legend.innerHTML += `
     <div style="display:flex; align-items:center; gap:8px;">
-      <div style="width:8px; height:8px; border-radius:50%; background:₹{typeColorArr[i]}; flex-shrink:0;"></div>
-      <span style="text-transform:capitalize; color:var(--text);">₹{label}</span>
-      <span style="margin-left:auto; color:var(--muted);">₹{typeValues[i]} <span style="color:var(--muted)">(₹{pct}%)</span></span>
+      <div style="width:8px; height:8px; border-radius:50%; background:${typeColorArr[i]}; flex-shrink:0;"></div>
+      <span style="text-transform:capitalize; color:var(--text);">${label}</span>
+      <span style="margin-left:auto; color:var(--muted);">
+        ${typeValues[i]} <span style="color:var(--muted)">(${pct}%)</span>
+      </span>
     </div>
   `;
 });

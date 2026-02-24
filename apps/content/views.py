@@ -99,20 +99,36 @@ def upload_content_view(request):
             return redirect('content:detail', pk=content.pk)
     else:
         form = ContentUploadForm()
+       
     return render(request, 'content/upload.html', {'form': form})
 
 
 @login_required
 def edit_content_view(request, pk):
-    content = get_object_or_404(Content, pk=pk, uploaded_by=request.user)
+    content = get_object_or_404(Content, pk=pk)
+
+    if not request.user.is_admin and content.uploaded_by != request.user:
+        return HttpResponseForbidden("Not allowed.")
+
     if request.method == 'POST':
+        print("POST DATA:", request.POST)
+        print("FILES:", request.FILES)
+
         form = ContentUploadForm(request.POST, request.FILES, instance=content)
+
+        print("IS VALID:", form.is_valid())
+
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Content updated successfully!')
-            return redirect('content:detail', pk=content.pk)
+            print("CLEANED DATA:", form.cleaned_data)
+            obj = form.save()
+            print("SAVED OBJECT:", obj)
+            return redirect('content:detail', pk=obj.pk)
+        else:
+            print("FORM ERRORS:", form.errors)
+
     else:
         form = ContentUploadForm(instance=content)
+
     return render(request, 'content/edit.html', {'form': form, 'content': content})
 
 
